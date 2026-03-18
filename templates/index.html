@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hand Sign Detection</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: white;
+        text-align: center;
+        padding: 20px;
+    }
+    h1 {
+        margin-bottom: 10px;
+        color: #00ffcc;
+    }
+    #webcam-container {
+        position: relative;
+        display: inline-block;
+        border: 3px solid #00ffcc;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    video {
+        width: 640px;
+        height: 480px;
+        background: black;
+    }
+    #timer {
+        font-size: 2rem;
+        margin-top: 10px;
+        color: yellow;
+    }
+    button {
+        padding: 10px 20px;
+        margin: 10px;
+        border: none;
+        background: #00ffcc;
+        color: black;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    button:hover {
+        background: #00cca3;
+    }
+    #output-section {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .output-box {
+        border: 1px solid #00ffcc;
+        padding: 10px;
+        border-radius: 5px;
+        background: #1e1e1e;
+        margin-top: 10px;
+        width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>🤟 Hand Sign Detection</h1>
+
+<div id="webcam-container">
+    <!-- Webcam will appear here -->
+    <video id="webcam" autoplay playsinline></video>
+</div>
+
+<div id="timer">Next capture in: 3s</div>
+
+<div>
+    <button onclick="generateWords()">Generate Words</button>
+    <button onclick="generateSentence()">Generate Sentence</button>
+    <button onclick="generateSpeech('en')">Generate English Speech</button>
+    <button onclick="generateSpeech('zh')">Generate Chinese Speech</button>
+</div>
+
+<div id="output-section">
+    <h2>Detected Words</h2>
+    <div id="words" class="output-box">No words detected yet.</div>
+
+    <h2>Generated Sentence</h2>
+    <div id="sentence" class="output-box">No sentence generated yet.</div>
+
+    <h2>Speech Output</h2>
+    <audio id="audio-player" controls style="display:none;"></audio>
+</div>
+
+<script>
+    // === Webcam Setup ===
+    const video = document.getElementById('webcam');
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => { console.error("Webcam error:", err); });
+
+    // === Timer Logic ===
+    let countdown = 3;
+    setInterval(() => {
+        countdown--;
+        if (countdown <= 0) countdown = 3;
+        document.getElementById('timer').innerText = `Next capture in: ${countdown}s`;
+    }, 1000);
+
+    // === Backend Calls ===
+    function generateWords() {
+        fetch('/generate_words') // Your backend route
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('words').innerText = data.words.join(', ');
+            })
+            .catch(err => console.error(err));
+    }
+
+    function generateSentence() {
+        fetch('/generate_sentence') // Your backend route
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('sentence').innerText = data.sentence;
+            })
+            .catch(err => console.error(err));
+    }
+
+    function generateSpeech(lang) {
+        fetch(`/generate_speech?lang=${lang}`) // Your backend route
+            .then(res => res.json())
+            .then(data => {
+                const audioPlayer = document.getElementById('audio-player');
+                audioPlayer.src = data.audio_path;
+                audioPlayer.style.display = 'block';
+                audioPlayer.play();
+            })
+            .catch(err => console.error(err));
+    }
+</script>
+
+</body>
+</html>
